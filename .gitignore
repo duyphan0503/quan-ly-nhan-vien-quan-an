@@ -55,3 +55,22 @@ _ReSharper*/
 *.bak
 *.tmp
 *.temp
+
+# === DEVELOPMENT & AGENT WORKFLOWS ===
+# Hide internal agent instructions and skills
+.agent/
+.gemini/
+
+# Hide development process requests and transient images
+requests/
+
+# Hide internal planning and draft documents
+*KE_HOACH*
+*PROMPTS*
+*GUIDELINES*
+docs/drafts/
+*.txt
+
+# Hide environment specific shell scripts
+*.sh
+docker-compose.yml
