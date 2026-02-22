@@ -1,18 +1,20 @@
 using QuanLyNhanVien.DataAccess;
+using QuanLyNhanVien.Infrastructure;
 using QuanLyNhanVien.Models;
 
 namespace QuanLyNhanVien.Services
 {
     /// <summary>
-    /// Handles authentication and account management.
+    /// Xử lý xác thực người dùng và quản lý tài khoản.
+    /// Mật khẩu luôn được hash (SHA-256) trước khi lưu hoặc so sánh với DB.
     /// </summary>
     public class TaiKhoanService
     {
         private readonly TaiKhoanDAL _dal = new TaiKhoanDAL();
 
         /// <summary>
-        /// Authenticate a user with username and password.
-        /// Returns the account on success, or a failure message.
+        /// Xác thực một người dùng với tên đăng nhập và mật khẩu.
+        /// Mật khẩu được hash SHA-256 trước khi so sánh với giá trị trong DB.
         /// </summary>
         public ServiceResult<TaiKhoan> DangNhap(string tenDangNhap, string matKhau)
         {
@@ -22,7 +24,10 @@ namespace QuanLyNhanVien.Services
             if (string.IsNullOrEmpty(matKhau))
                 return ServiceResult<TaiKhoan>.Fail("Vui lòng nhập mật khẩu.");
 
-            var tk = _dal.DangNhap(tenDangNhap.Trim(), matKhau);
+            // Hash mật khẩu trước khi so sánh với DB
+            string matKhauHash = SecurityHelper.HashPassword(matKhau);
+
+            var tk = _dal.DangNhap(tenDangNhap.Trim(), matKhauHash);
             if (tk == null)
                 return ServiceResult<TaiKhoan>.Fail("Sai tên đăng nhập hoặc mật khẩu.");
 
@@ -30,7 +35,8 @@ namespace QuanLyNhanVien.Services
         }
 
         /// <summary>
-        /// Change the password for an account.
+        /// Cập nhật mật khẩu cho một tài khoản khả dụng.
+        /// Mật khẩu mới được hash SHA-256 trước khi lưu vào DB.
         /// </summary>
         public ServiceResult DoiMatKhau(int maTK, string matKhauMoi)
         {
@@ -40,7 +46,10 @@ namespace QuanLyNhanVien.Services
             if (matKhauMoi.Length < 4)
                 return ServiceResult.Fail("Mật khẩu phải có ít nhất 4 ký tự.");
 
-            bool ok = _dal.DoiMatKhau(maTK, matKhauMoi);
+            // Hash mật khẩu mới trước khi lưu vào DB
+            string matKhauHash = SecurityHelper.HashPassword(matKhauMoi);
+
+            bool ok = _dal.DoiMatKhau(maTK, matKhauHash);
             return ok
                 ? ServiceResult.Ok("Đổi mật khẩu thành công.")
                 : ServiceResult.Fail("Không thể đổi mật khẩu. Tài khoản không tồn tại.");

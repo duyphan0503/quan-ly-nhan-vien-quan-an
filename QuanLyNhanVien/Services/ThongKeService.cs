@@ -5,16 +5,16 @@ using QuanLyNhanVien.DataAccess;
 namespace QuanLyNhanVien.Services
 {
     /// <summary>
-    /// Statistics and reporting service.
-    /// Encapsulates all report-generation logic — 
-    /// Forms only receive display-ready data.
+    /// File xử lý dịch vụ báo cáo và thống kê.
+    /// Bao bọc lại toàn bộ quy trình tạo báo cáo thống kê —
+    /// Các Form chỉ có nhiệm vụ nhận về thông tin đã cấu trúc và hiển thị.
     /// </summary>
     public class ThongKeService
     {
         private readonly BangLuongDAL _dal = new BangLuongDAL();
 
         /// <summary>
-        /// Result container for annual payroll statistics.
+        /// Bộ chứa dữ liệu lưu trữ kết quả thống kê hàng năm.
         /// </summary>
         public class ThongKeNam
         {
@@ -24,8 +24,8 @@ namespace QuanLyNhanVien.Services
         }
 
         /// <summary>
-        /// Generate annual payroll statistics including monthly breakdown
-        /// and the total annual expenditure.
+        /// Trích xuất bảng báo cáo thống kê năm bao gồm chi tiết lương từng tháng
+        /// và tiền quỹ cả năm.
         /// </summary>
         public ServiceResult<ThongKeNam> LayThongKeNam(int nam)
         {
@@ -34,7 +34,7 @@ namespace QuanLyNhanVien.Services
 
             var dt = _dal.ThongKeLuong(nam);
 
-            // Calculate annual total from the dataset
+            // Tính toán quỹ lương hàng năm từ một tệp dữ liệu
             decimal tongNam = 0;
             foreach (DataRow row in dt.Rows)
             {
@@ -42,12 +42,14 @@ namespace QuanLyNhanVien.Services
                     tongNam += Convert.ToDecimal(row["TongThucNhan"]);
             }
 
-            return ServiceResult<ThongKeNam>.Ok(new ThongKeNam
-            {
-                ChiTietTheoThang = dt,
-                TongChiNam = tongNam,
-                Nam = nam
-            });
+            return ServiceResult<ThongKeNam>.Ok(
+                new ThongKeNam
+                {
+                    ChiTietTheoThang = dt,
+                    TongChiNam = tongNam,
+                    Nam = nam,
+                }
+            );
         }
     }
 }

@@ -6,9 +6,9 @@ using QuanLyNhanVien.Models;
 namespace QuanLyNhanVien.Services
 {
     /// <summary>
-    /// Core salary calculation engine and payroll management.
-    /// All business constants and formulas are centralized here — 
-    /// the Forms layer never performs financial calculations directly.
+    /// File xử lý cốt lõi tính toán lương bổng và quản trị thu nhập nhân sự.
+    /// Toàn bộ các quy tắc bất biến và công thức toán học chuyên ngành đều được đặt ở đây —
+    /// Các Form giao diện (UI) tuyệt đối không tự ý thực hiện các phép tài chính.
     /// </summary>
     public class BangLuongService
     {
@@ -16,23 +16,23 @@ namespace QuanLyNhanVien.Services
         private readonly NhanVienDAL _nvDAL = new NhanVienDAL();
 
         // ══════════════════════════════════════════════
-        //  BUSINESS CONSTANTS — change here to affect
-        //  the entire application
+        //  CÁC QUY TẮC BẤT BIẾN NGHIỆP VỤ — hãy chỉ thay đổi ở đây
+        //  nếu muốn tác động lên toàn bộ ứng dụng tính lương
         // ══════════════════════════════════════════════
 
-        /// <summary>Standard working days per month.</summary>
+        /// <summary>Số ngày công quy chuẩn trong một tháng hóa đơn.</summary>
         public const decimal NGAY_CONG_CHUAN = 26m;
 
-        /// <summary>Social insurance rate (10.5% of base salary).</summary>
+        /// <summary>Tỷ lệ đóng bảo hiểm xã hội chuẩn (10.5% lương cơ sở hiện tại).</summary>
         public const decimal TY_LE_BHXH = 0.105m;
 
         // ══════════════════════════════════════════════
-        //  SALARY CALCULATION
+        //  TÍNH TOÁN LƯƠNG
         // ══════════════════════════════════════════════
 
         /// <summary>
-        /// Result of a salary calculation — a pure data container
-        /// with no side effects.
+        /// Kết quả của hàm tính lương tổng — đây chỉ là một vỏ bọc thuần dữ liệu
+        /// không tác động (side-effects) thay đổi trạng thái gốc CSDL.
         /// </summary>
         public class KetQuaTinhLuong
         {
@@ -43,60 +43,67 @@ namespace QuanLyNhanVien.Services
         }
 
         /// <summary>
-        /// Pure salary calculation function. 
-        /// No DB access, no side effects — can be unit tested independently.
+        /// Hàm chức năng tính toán bảng lương tài chính cơ bản.
+        /// Không dùng tới CSDL, không gây ảnh hưởng hàm ngoài — thiết kế dễ dàng cho Unit Test.
         /// </summary>
-        /// <param name="luongCoBan">Base salary.</param>
-        /// <param name="ngayCong">Actual working days.</param>
-        /// <param name="tienUng">Advance payment.</param>
-        /// <returns>Calculation result on success, or a failure message.</returns>
+        /// <param name="luongCoBan">Mức lương cơ sở.</param>
+        /// <param name="ngayCong">Số lượng ngày công đi làm thực tế.</param>
+        /// <param name="tienUng">Tiền tạm ứng tháng của nhân viên.</param>
+        /// <returns>Bảng thống kê kết quả nếu thành công, xuất lỗi nếu thất bại đầu vào.</returns>
         public ServiceResult<KetQuaTinhLuong> TinhLuong(
-            decimal luongCoBan, decimal ngayCong, decimal tienUng)
+            decimal luongCoBan,
+            decimal ngayCong,
+            decimal tienUng
+        )
         {
             if (ngayCong < 0)
-                return ServiceResult<KetQuaTinhLuong>.Fail(
-                    "Ngày công không được âm.");
+                return ServiceResult<KetQuaTinhLuong>.Fail("Ngày công không được âm.");
 
             if (ngayCong > 31)
-                return ServiceResult<KetQuaTinhLuong>.Fail(
-                    "Ngày công không được vượt quá 31.");
+                return ServiceResult<KetQuaTinhLuong>.Fail("Ngày công không được vượt quá 31.");
 
             if (tienUng < 0)
-                return ServiceResult<KetQuaTinhLuong>.Fail(
-                    "Tiền ứng không được âm.");
+                return ServiceResult<KetQuaTinhLuong>.Fail("Tiền ứng không được âm.");
 
             if (luongCoBan < 0)
-                return ServiceResult<KetQuaTinhLuong>.Fail(
-                    "Lương cơ bản không hợp lệ.");
+                return ServiceResult<KetQuaTinhLuong>.Fail("Lương cơ bản không hợp lệ.");
 
-            // Core formula
+            // Công thức tính lương cốt lõi
             decimal luongTheoCong = Math.Round(luongCoBan / NGAY_CONG_CHUAN * ngayCong);
             decimal bhxh = Math.Round(luongCoBan * TY_LE_BHXH);
-            decimal thue = 0m; // Simplified — extend here for TNCN brackets
+            decimal thue = 0m; // Thuế TNCN tạm giản lược — có thể mở rộng logic về sau
 
             decimal tongThucNhan = luongTheoCong - tienUng - bhxh - thue;
-            if (tongThucNhan < 0) tongThucNhan = 0;
+            if (tongThucNhan < 0)
+                tongThucNhan = 0;
 
-            return ServiceResult<KetQuaTinhLuong>.Ok(new KetQuaTinhLuong
-            {
-                LuongTheoCong = luongTheoCong,
-                BHXH = bhxh,
-                Thue = thue,
-                TongThucNhan = tongThucNhan
-            });
+            return ServiceResult<KetQuaTinhLuong>.Ok(
+                new KetQuaTinhLuong
+                {
+                    LuongTheoCong = luongTheoCong,
+                    BHXH = bhxh,
+                    Thue = thue,
+                    TongThucNhan = tongThucNhan,
+                }
+            );
         }
 
         // ══════════════════════════════════════════════
-        //  PAYROLL CRUD
+        //  XỬ LÝ NGHIỆP VỤ BẢNG LƯƠNG TẠI CSDL
         // ══════════════════════════════════════════════
 
         /// <summary>
-        /// Calculate and save a payroll entry for an employee.
-        /// Orchestrates validation → calculation → persistence.
+        /// Tiến hành tính toán và lưu trực tiếp hồ sơ tính lương của nhân viên vào CSDL.
+        /// Tổng hợp quy trình: Xác thực → Tính Toán Tiền → Khởi tạo CSDL.
         /// </summary>
         public ServiceResult LuuBangLuong(
-            int maNV, int thang, int nam,
-            decimal luongCoBan, decimal ngayCong, decimal tienUng)
+            int maNV,
+            int thang,
+            int nam,
+            decimal luongCoBan,
+            decimal ngayCong,
+            decimal tienUng
+        )
         {
             if (maNV <= 0)
                 return ServiceResult.Fail("Vui lòng chọn nhân viên.");
@@ -107,7 +114,7 @@ namespace QuanLyNhanVien.Services
             if (nam < 2000 || nam > 2100)
                 return ServiceResult.Fail("Năm không hợp lệ.");
 
-            // Calculate salary via the pure function
+            // Tính các đầu mục lương qua hàm tĩnh thuần túy
             var calcResult = TinhLuong(luongCoBan, ngayCong, tienUng);
             if (!calcResult.Success)
                 return ServiceResult.Fail(calcResult.Message);
@@ -123,7 +130,7 @@ namespace QuanLyNhanVien.Services
                 TienUng = tienUng,
                 BHXH = kq.BHXH,
                 Thue = kq.Thue,
-                TongThucNhan = kq.TongThucNhan
+                TongThucNhan = kq.TongThucNhan,
             };
 
             bool ok = _blDAL.LuuBangLuong(bl);
@@ -132,19 +139,19 @@ namespace QuanLyNhanVien.Services
                 : ServiceResult.Fail("Không thể lưu bảng lương. Vui lòng thử lại.");
         }
 
-        /// <summary>Get all payroll entries for a given month/year.</summary>
+        /// <summary>Tải toàn bộ hồ sơ truy xuất bảng lương theo tháng.</summary>
         public List<BangLuong> LayTheoThangNam(int thang, int nam)
         {
             return _blDAL.LayTheoThangNam(thang, nam);
         }
 
-        /// <summary>Get all employees for the payroll dropdown.</summary>
+        /// <summary>Tải toàn bộ danh sách nhân viên cho Dropdown cập nhật.</summary>
         public List<NhanVien> LayDanhSachNhanVien()
         {
             return _nvDAL.LayTatCa();
         }
 
-        /// <summary>Delete a payroll entry by ID.</summary>
+        /// <summary>Xoá phiếu thông tin theo mã quản lý (ID).</summary>
         public ServiceResult Xoa(int maBangLuong)
         {
             if (maBangLuong <= 0)

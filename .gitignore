@@ -24,6 +24,7 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Vv]isualStudioTester/
+packages/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
@@ -55,6 +56,9 @@ _ReSharper*/
 *.bak
 *.tmp
 *.temp
+
+# User credentials (encrypted)
+login.cfg
 
 # === DEVELOPMENT & AGENT WORKFLOWS ===
 # Hide internal agent instructions and skills

@@ -22,16 +22,22 @@ namespace QuanLyNhanVien.Controls
         public GlassPanel()
         {
             SetStyle(
-                ControlStyles.AllPaintingInWmPaint |
-                ControlStyles.UserPaint |
-                ControlStyles.OptimizedDoubleBuffer |
-                ControlStyles.ResizeRedraw,
-                true);
+                ControlStyles.AllPaintingInWmPaint
+                    | ControlStyles.UserPaint
+                    | ControlStyles.OptimizedDoubleBuffer
+                    | ControlStyles.ResizeRedraw,
+                true
+            );
         }
 
         public enum GlassBorderSide
         {
-            None, Left, Right, Top, Bottom, All
+            None,
+            Left,
+            Right,
+            Top,
+            Bottom,
+            All,
         }
 
         #region Properties
@@ -39,37 +45,61 @@ namespace QuanLyNhanVien.Controls
         public Color GradientTop
         {
             get => _gradientTop;
-            set { _gradientTop = value; Invalidate(); }
+            set
+            {
+                _gradientTop = value;
+                Invalidate();
+            }
         }
 
         public Color GradientBottom
         {
             get => _gradientBottom;
-            set { _gradientBottom = value; Invalidate(); }
+            set
+            {
+                _gradientBottom = value;
+                Invalidate();
+            }
         }
 
         public Color GlassBorderColor
         {
             get => _borderColor;
-            set { _borderColor = value; Invalidate(); }
+            set
+            {
+                _borderColor = value;
+                Invalidate();
+            }
         }
 
         public int BorderRadius
         {
             get => _borderRadius;
-            set { _borderRadius = value; Invalidate(); }
+            set
+            {
+                _borderRadius = value;
+                Invalidate();
+            }
         }
 
         public bool DrawGlassBorder
         {
             get => _drawBorder;
-            set { _drawBorder = value; Invalidate(); }
+            set
+            {
+                _drawBorder = value;
+                Invalidate();
+            }
         }
 
         public GlassBorderSide BorderSide
         {
             get => _borderSide;
-            set { _borderSide = value; Invalidate(); }
+            set
+            {
+                _borderSide = value;
+                Invalidate();
+            }
         }
 
         #endregion
@@ -83,19 +113,28 @@ namespace QuanLyNhanVien.Controls
             var rect = ClientRectangle;
 
             // Main gradient background
-            using (var brush = new LinearGradientBrush(
-                rect, _gradientTop, _gradientBottom, LinearGradientMode.Vertical))
+            using (
+                var brush = new LinearGradientBrush(
+                    rect,
+                    _gradientTop,
+                    _gradientBottom,
+                    LinearGradientMode.Vertical
+                )
+            )
             {
                 g.FillRectangle(brush, rect);
             }
 
             // Subtle frosted-glass horizontal band at the top
             var frostRect = new Rectangle(0, 0, Width, Math.Max(1, Height / 4));
-            using (var frostBrush = new LinearGradientBrush(
-                frostRect,
-                Color.FromArgb(15, 255, 255, 255),
-                Color.FromArgb(0, 255, 255, 255),
-                LinearGradientMode.Vertical))
+            using (
+                var frostBrush = new LinearGradientBrush(
+                    frostRect,
+                    Color.FromArgb(15, 255, 255, 255),
+                    Color.FromArgb(0, 255, 255, 255),
+                    LinearGradientMode.Vertical
+                )
+            )
             {
                 g.FillRectangle(frostBrush, frostRect);
             }
@@ -117,7 +156,13 @@ namespace QuanLyNhanVien.Controls
                             g.DrawLine(pen, rect.Left, rect.Top, rect.Right, rect.Top);
                             break;
                         case GlassBorderSide.Bottom:
-                            g.DrawLine(pen, rect.Left, rect.Bottom - 1, rect.Right, rect.Bottom - 1);
+                            g.DrawLine(
+                                pen,
+                                rect.Left,
+                                rect.Bottom - 1,
+                                rect.Right,
+                                rect.Bottom - 1
+                            );
                             break;
                         case GlassBorderSide.All:
                             g.DrawRectangle(pen, 0, 0, Width - 1, Height - 1);

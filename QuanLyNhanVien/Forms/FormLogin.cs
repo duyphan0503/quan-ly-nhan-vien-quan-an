@@ -2,56 +2,120 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
-using QuanLyNhanVien.Controls;
 using QuanLyNhanVien.Infrastructure;
 using QuanLyNhanVien.Services;
 
 namespace QuanLyNhanVien.Forms
 {
-    public class FormLogin : Form
+    public partial class FormLogin : Form
     {
-        private void SetAppIcon()
-        {
-            try
-            {
-                string iconPath = System.IO.Path.Combine(Application.StartupPath, "Assets", "app.ico");
-                if (System.IO.File.Exists(iconPath))
-                {
-                    this.Icon = new Icon(iconPath);
-                }
-            }
-            catch { /* Ignore icon loading errors */ }
-        }
-
-        private Panel pnlCard;
-        private PictureBox pbLogo;
-        private Label lblTitle;
-        private Label lblSubtitle;
-        private Label lblUser;
-        private Label lblPass;
-        private TextBox txtUser;
-        private TextBox txtPass;
-        private RoundedButton btnLogin;
-        private RoundedButton btnExit;
-        private Label lblStatus;
-        private CheckBox chkRemember;
-
         private readonly TaiKhoanService _service = new TaiKhoanService();
 
         public FormLogin()
         {
             InitializeComponent();
+            ApplyTheme();
+            WireEvents();
             SetAppIcon();
-            txtUser.KeyDown += InputKeyDown;
-            txtPass.KeyDown += InputKeyDown;
 
-            // Load saved credentials
+            // Tải thông tin đăng nhập đã lưu
             var settings = LoginSettings.Load();
             if (settings != null)
             {
                 txtUser.Text = settings.Username;
                 txtPass.Text = SecurityHelper.Decrypt(settings.EncryptedPassword);
                 chkRemember.Checked = settings.RememberMe;
+            }
+        }
+
+        private void ApplyTheme()
+        {
+            this.BackColor = AppColors.Crust;
+            pnlCard.BackColor = AppColors.Base;
+
+            // Biểu trưng (Logo)
+            try
+            {
+                string logoPath = System.IO.Path.Combine(
+                    Application.StartupPath,
+                    "Assets",
+                    "logo.png"
+                );
+                if (System.IO.File.Exists(logoPath))
+                {
+                    var bmp = new Bitmap(logoPath);
+                    pbLogo.Image = bmp;
+                    this.Icon = System.Drawing.Icon.FromHandle(bmp.GetHicon());
+                }
+            }
+            catch { }
+
+            // Tiêu đề
+            lblTitle.Font = AppFonts.Create(16, FontStyle.Bold);
+            lblTitle.ForeColor = AppColors.Green;
+
+            lblSubtitle.Font = AppFonts.Tiny;
+            lblSubtitle.ForeColor = AppColors.Overlay;
+
+            // Điền chữ nhãn
+            lblUser.Font = AppFonts.Tiny;
+            lblUser.ForeColor = AppColors.SubText;
+            lblPass.Font = AppFonts.Tiny;
+            lblPass.ForeColor = AppColors.SubText;
+
+            // Ô nhập liệu
+            txtUser.Font = AppFonts.Body;
+            txtUser.BackColor = AppColors.InputBg;
+            txtPass.Font = AppFonts.Body;
+            txtPass.BackColor = AppColors.InputBg;
+
+            // Hộp kiểm (Checkbox)
+            chkRemember.Font = AppFonts.Tiny;
+            chkRemember.ForeColor = AppColors.SubText;
+
+            // Các nút ấn
+            btnLogin.Font = AppFonts.BodyBold;
+            btnLogin.ForeColor = AppColors.Crust;
+            btnLogin.IdleColor = AppColors.Blue;
+            btnLogin.HoverColor = AppColors.Lighten(AppColors.Blue);
+            btnLogin.PressColor = AppColors.Darken(AppColors.Blue);
+
+            btnExit.Font = AppFonts.BodyBold;
+            btnExit.ForeColor = AppColors.Crust;
+            btnExit.IdleColor = AppColors.Red;
+            btnExit.HoverColor = AppColors.Lighten(AppColors.Red);
+            btnExit.PressColor = AppColors.Darken(AppColors.Red);
+
+            // Trạng thái
+            lblStatus.Font = AppFonts.Tiny;
+            lblStatus.ForeColor = AppColors.Red;
+        }
+
+        private void WireEvents()
+        {
+            btnLogin.Click += BtnLogin_Click;
+            btnExit.Click += (s, e) => Application.Exit();
+            pnlCard.Paint += PnlCard_Paint;
+            txtUser.KeyDown += InputKeyDown;
+            txtPass.KeyDown += InputKeyDown;
+        }
+
+        private void SetAppIcon()
+        {
+            try
+            {
+                string iconPath = System.IO.Path.Combine(
+                    Application.StartupPath,
+                    "Assets",
+                    "app.ico"
+                );
+                if (System.IO.File.Exists(iconPath))
+                {
+                    this.Icon = new Icon(iconPath);
+                }
+            }
+            catch
+            { /* Bỏ qua các lỗi tải biểu tượng icon */
             }
         }
 
@@ -66,178 +130,6 @@ namespace QuanLyNhanVien.Forms
             {
                 Application.Exit();
             }
-        }
-
-        private void InitializeComponent()
-        {
-            this.Text = "Đăng Nhập — Quản Lý Nhân Viên Quán Ăn";
-            this.Size = new Size(500, 440);
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
-            this.BackColor = AppColors.Crust;
-
-            // Central card panel
-            pnlCard = new Panel
-            {
-                Size = new Size(420, 370),
-                Location = new Point(40, 30),
-                BackColor = AppColors.Base
-            };
-            pnlCard.Paint += PnlCard_Paint;
-
-            // Logo
-            pbLogo = new PictureBox
-            {
-                Image = Image.FromFile("Assets/logo.png"),
-                SizeMode = PictureBoxSizeMode.Zoom,
-                Location = new Point(0, 15),
-                Size = new Size(420, 50),
-                BackColor = Color.Transparent
-            };
-
-            // Title
-            lblTitle = new Label
-            {
-                Text = "QUẢN LÝ NHÂN VIÊN",
-                Font = AppFonts.Create(16, FontStyle.Bold),
-                ForeColor = AppColors.Green,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Location = new Point(0, 65),
-                Size = new Size(420, 28),
-                BackColor = Color.Transparent
-            };
-
-            // Subtitle
-            lblSubtitle = new Label
-            {
-                Text = "Đăng nhập để tiếp tục",
-                Font = AppFonts.Tiny,
-                ForeColor = AppColors.Overlay,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Location = new Point(0, 92),
-                Size = new Size(420, 20),
-                BackColor = Color.Transparent
-            };
-
-            // Username
-            lblUser = new Label
-            {
-                Text = "Tên đăng nhập",
-                Font = AppFonts.Tiny,
-                ForeColor = AppColors.SubText,
-                Location = new Point(40, 130),
-                AutoSize = true,
-                BackColor = Color.Transparent
-            };
-
-            txtUser = new TextBox
-            {
-                Font = AppFonts.Body,
-                Location = new Point(40, 150),
-                Size = new Size(340, 30),
-                BackColor = AppColors.InputBg,
-                ForeColor = Color.White,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-
-            // Password
-            lblPass = new Label
-            {
-                Text = "Mật khẩu",
-                Font = AppFonts.Tiny,
-                ForeColor = AppColors.SubText,
-                Location = new Point(40, 192),
-                AutoSize = true,
-                BackColor = Color.Transparent
-            };
-
-            txtPass = new TextBox
-            {
-                Font = AppFonts.Body,
-                Location = new Point(40, 212),
-                Size = new Size(340, 30),
-                PasswordChar = '●',
-                BackColor = AppColors.InputBg,
-                ForeColor = Color.White,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-
-            // Remember checkbox
-            chkRemember = new CheckBox
-            {
-                Text = "Ghi nhớ đăng nhập",
-                Font = AppFonts.Tiny,
-                ForeColor = AppColors.SubText,
-                Location = new Point(40, 250),
-                AutoSize = true,
-                BackColor = Color.Transparent
-            };
-
-            // Actions Panel to group buttons
-            var pnlActions = new FlowLayoutPanel
-            {
-                Location = new Point(40, 285),
-                Size = new Size(340, 50),
-                BackColor = Color.Transparent,
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false
-            };
-
-            // Login button
-            btnLogin = new RoundedButton
-            {
-                Text = "ĐĂNG NHẬP",
-                Font = AppFonts.BodyBold,
-                Size = new Size(165, 42),
-                Margin = new Padding(0, 0, 10, 0),
-                IdleColor = AppColors.Blue,
-                HoverColor = AppColors.Lighten(AppColors.Blue),
-                PressColor = AppColors.Darken(AppColors.Blue),
-                ForeColor = AppColors.Crust,
-                CornerRadius = 10,
-                TextAlign = ContentAlignment.MiddleCenter
-            };
-            btnLogin.Click += BtnLogin_Click;
-
-            // Exit button
-            btnExit = new RoundedButton
-            {
-                Text = "THOÁT",
-                Font = AppFonts.BodyBold,
-                Size = new Size(165, 42),
-                Margin = new Padding(0),
-                IdleColor = AppColors.Red,
-                HoverColor = AppColors.Lighten(AppColors.Red),
-                PressColor = AppColors.Darken(AppColors.Red),
-                ForeColor = AppColors.Crust,
-                CornerRadius = 10,
-                TextAlign = ContentAlignment.MiddleCenter
-            };
-            btnExit.Click += (s, e) => Application.Exit();
-
-            pnlActions.Controls.Add(btnLogin);
-            pnlActions.Controls.Add(btnExit);
-
-            // Status label
-            lblStatus = new Label
-            {
-                Text = "",
-                Font = AppFonts.Tiny,
-                ForeColor = AppColors.Red,
-                Location = new Point(40, 340),
-                Size = new Size(340, 20),
-                BackColor = Color.Transparent
-            };
-
-            pnlCard.Controls.AddRange(new Control[]
-            {
-                pbLogo, lblTitle, lblSubtitle,
-                lblUser, txtUser, lblPass, txtPass,
-                chkRemember,
-                pnlActions, lblStatus
-            });
-            this.Controls.Add(pnlCard);
         }
 
         private void PnlCard_Paint(object sender, PaintEventArgs e)
@@ -262,8 +154,8 @@ namespace QuanLyNhanVien.Forms
         }
 
         /// <summary>
-        /// Login handler — delegates validation and auth to TaiKhoanService.
-        /// The Form only handles UI feedback.
+        /// Xử lý đăng nhập — ủy quyền kiểm tra bảo mật sang TaiKhoanService.
+        /// Form chỉ đảm nhiệm phản hồi lại giao diện mức UI cho người sử dụng.
         /// </summary>
         private void BtnLogin_Click(object sender, EventArgs e)
         {
@@ -275,13 +167,12 @@ namespace QuanLyNhanVien.Forms
 
                 if (result.Success)
                 {
-                    // Save login settings
+                    // Lưu cấu hình đăng nhập
                     LoginSettings.Save(txtUser.Text, txtPass.Text, chkRemember.Checked);
 
-                    // Track the logged-in user for all subsequent log entries
+                    // Theo dõi tên người dùng đã đăng nhập cho tất cả các bản ghi nhật ký tiếp theo
                     AppLogger.SetCurrentUser(result.Data.TenDangNhap);
-                    AppLogger.Info("FormLogin",
-                        "Đăng nhập thành công: " + result.Data.TenDangNhap);
+                    AppLogger.Info("FormLogin", "Đăng nhập thành công: " + result.Data.TenDangNhap);
 
                     this.Hide();
                     var main = new FormMain(result.Data.TenDangNhap);
@@ -290,22 +181,26 @@ namespace QuanLyNhanVien.Forms
                 }
                 else
                 {
-                    AppLogger.Warning("FormLogin",
-                        "Đăng nhập thất bại cho: " + txtUser.Text
-                        + " — " + result.Message);
+                    AppLogger.Warning(
+                        "FormLogin",
+                        "Đăng nhập thất bại cho: " + txtUser.Text + " — " + result.Message
+                    );
 
-                    lblStatus.Text = "❌ " + result.Message;
+                    lblStatus.Text = result.Message;
                     txtPass.Clear();
                     txtPass.Focus();
                 }
             }
             catch (Exception ex)
             {
-                AppLogger.Error("FormLogin.BtnLogin_Click",
-                    "Lỗi kết nối CSDL khi đăng nhập.", ex);
+                AppLogger.Error("FormLogin.BtnLogin_Click", "Lỗi kết nối CSDL khi đăng nhập.", ex);
 
-                MessageBox.Show("Lỗi kết nối CSDL:\n" + ex.Message,
-                    "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    "Lỗi kết nối CSDL:\n" + ex.Message,
+                    "Lỗi",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
             }
         }
     }

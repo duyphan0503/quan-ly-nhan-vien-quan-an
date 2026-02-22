@@ -14,15 +14,15 @@ namespace QuanLyNhanVien
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            // ── Step 1: Install global exception handlers FIRST ──
-            // This must happen before ANY other code runs, so that even
-            // startup errors are caught, logged, and shown to the user.
+            // ── Bước 1: Khởi động bộ xử lý đánh chặn ngoại lệ cục bộ (global exception handlers) ĐẦU TIÊN ──
+            // Thao tác này phải diễn ra trước BẤT KỲ đoạn mã chạy nền nào khác, đảm bảo các
+            // lỗi phát sinh sớm sẽ bị bắt lại, đính vào log và gửi cảnh báo nguyên bản.
             GlobalExceptionHandler.Install();
             AppLogger.Info("Program", "Ứng dụng khởi động.");
 
-            // ── Step 2: Test database connection ──
-            // If the connection fails, launch the Connection Wizard
-            // so the client can configure their SQL Server connection.
+            // ── Bước 2: Test thăm dò CSDL tĩnh (database connection) ──
+            // Nếu đánh giá kết nối thất bại, mở tự động trình Wizard Kết Nối
+            // nhằm hỗ trợ client thiết lập đường truyền tới điểm máy chủ của SQL Server.
             bool connectionReady = false;
 
             try
@@ -31,14 +31,16 @@ namespace QuanLyNhanVien
             }
             catch
             {
-                // Config may be missing or malformed — wizard will handle it
+                // Cấu hình không có hoặc bị sai định dạng — wizard sẽ đảm nhận việc khôi phục nó
                 connectionReady = false;
             }
 
             if (!connectionReady)
             {
-                AppLogger.Warning("Program",
-                    "Kết nối CSDL thất bại — khởi chạy Connection Wizard.");
+                AppLogger.Warning(
+                    "Program",
+                    "Kết nối CSDL thất bại — khởi chạy Connection Wizard."
+                );
 
                 using (var wizard = new FormConnectionWizard())
                 {
@@ -46,24 +48,27 @@ namespace QuanLyNhanVien
 
                     if (result != DialogResult.OK || !wizard.ConfigurationSaved)
                     {
-                        AppLogger.Info("Program",
-                            "Người dùng thoát Connection Wizard — đóng ứng dụng.");
-                        return; // Exit the application
+                        AppLogger.Info(
+                            "Program",
+                            "Người dùng thoát Connection Wizard — đóng ứng dụng."
+                        );
+                        return; // Ngắt thoát khỏi ứng dụng hoàn toàn
                     }
 
-                    // Wizard saved successfully — refresh the connection string
+                    // Việc cài qua Wizard hoàn tất — tải mới chuỗi liên kết
                     DatabaseHelper.RefreshConnectionString();
 
-                    // Verify the new connection actually works
+                    // Xác minh lại kết nối mới cấu hình liệu đã truy cập hợp lệ chưa
                     if (!DatabaseHelper.TestConnection(timeoutSeconds: 5))
                     {
-                        AppLogger.Error("Program",
-                            "Kết nối vẫn thất bại sau khi wizard hoàn tất.");
+                        AppLogger.Error("Program", "Kết nối vẫn thất bại sau khi wizard hoàn tất.");
                         MessageBox.Show(
                             "Cấu hình đã được lưu nhưng vẫn không thể kết nối.\n"
-                            + "Vui lòng kiểm tra lại SQL Server và khởi động lại ứng dụng.",
+                                + "Vui lòng kiểm tra lại SQL Server và khởi động lại ứng dụng.",
                             "Cảnh Báo",
-                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning
+                        );
                         return;
                     }
                 }
@@ -71,7 +76,7 @@ namespace QuanLyNhanVien
 
             AppLogger.Info("Program", "Kết nối CSDL thành công — hiển thị FormLogin.");
 
-            // ── Step 3: Launch the login form ──
+            // ── Bước 3: Cho chạy mẫu Login ──
             Application.Run(new FormLogin());
         }
     }

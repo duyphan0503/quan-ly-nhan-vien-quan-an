@@ -13,7 +13,8 @@ namespace QuanLyNhanVien.DataAccess
             using (var conn = DatabaseHelper.GetConnection())
             {
                 conn.Open();
-                string sql = @"SELECT bl.MaBangLuong, bl.MaNV, bl.Thang, bl.Nam,
+                string sql =
+                    @"SELECT bl.MaBangLuong, bl.MaNV, bl.Thang, bl.Nam,
                                       bl.NgayCongThucTe, bl.LuongTheoCong,
                                       bl.TienUng, bl.BHXH, bl.Thue, bl.TongThucNhan,
                                       nv.HoTen, bp.TenBoPhan, nv.LuongCoBan
@@ -30,22 +31,24 @@ namespace QuanLyNhanVien.DataAccess
                     {
                         while (reader.Read())
                         {
-                            list.Add(new BangLuong
-                            {
-                                MaBangLuong = reader.GetInt32(0),
-                                MaNV = reader.GetInt32(1),
-                                Thang = reader.GetInt32(2),
-                                Nam = reader.GetInt32(3),
-                                NgayCongThucTe = reader.GetDecimal(4),
-                                LuongTheoCong = reader.GetDecimal(5),
-                                TienUng = reader.GetDecimal(6),
-                                BHXH = reader.GetDecimal(7),
-                                Thue = reader.GetDecimal(8),
-                                TongThucNhan = reader.GetDecimal(9),
-                                HoTen = reader.GetString(10),
-                                TenBoPhan = reader.GetString(11),
-                                LuongCoBan = reader.GetDecimal(12)
-                            });
+                            list.Add(
+                                new BangLuong
+                                {
+                                    MaBangLuong = reader.GetInt32(0),
+                                    MaNV = reader.GetInt32(1),
+                                    Thang = reader.GetInt32(2),
+                                    Nam = reader.GetInt32(3),
+                                    NgayCongThucTe = reader.GetDecimal(4),
+                                    LuongTheoCong = reader.GetDecimal(5),
+                                    TienUng = reader.GetDecimal(6),
+                                    BHXH = reader.GetDecimal(7),
+                                    Thue = reader.GetDecimal(8),
+                                    TongThucNhan = reader.GetDecimal(9),
+                                    HoTen = reader.GetString(10),
+                                    TenBoPhan = reader.GetString(11),
+                                    LuongCoBan = reader.GetDecimal(12),
+                                }
+                            );
                         }
                     }
                 }
@@ -58,7 +61,8 @@ namespace QuanLyNhanVien.DataAccess
             using (var conn = DatabaseHelper.GetConnection())
             {
                 conn.Open();
-                string sql = @"SELECT bl.MaBangLuong, bl.MaNV, bl.Thang, bl.Nam,
+                string sql =
+                    @"SELECT bl.MaBangLuong, bl.MaNV, bl.Thang, bl.Nam,
                                       bl.NgayCongThucTe, bl.LuongTheoCong,
                                       bl.TienUng, bl.BHXH, bl.Thue, bl.TongThucNhan,
                                       nv.HoTen, bp.TenBoPhan, nv.LuongCoBan
@@ -89,7 +93,7 @@ namespace QuanLyNhanVien.DataAccess
                                 TongThucNhan = reader.GetDecimal(9),
                                 HoTen = reader.GetString(10),
                                 TenBoPhan = reader.GetString(11),
-                                LuongCoBan = reader.GetDecimal(12)
+                                LuongCoBan = reader.GetDecimal(12),
                             };
                         }
                     }
@@ -104,7 +108,8 @@ namespace QuanLyNhanVien.DataAccess
             {
                 conn.Open();
                 // Kiểm tra tồn tại
-                string checkSql = "SELECT COUNT(*) FROM BangLuong WHERE MaNV = @maNV AND Thang = @thang AND Nam = @nam";
+                string checkSql =
+                    "SELECT COUNT(*) FROM BangLuong WHERE MaNV = @maNV AND Thang = @thang AND Nam = @nam";
                 bool exists;
                 using (var checkCmd = new SqlCommand(checkSql, conn))
                 {
@@ -117,7 +122,8 @@ namespace QuanLyNhanVien.DataAccess
                 string sql;
                 if (exists)
                 {
-                    sql = @"UPDATE BangLuong
+                    sql =
+                        @"UPDATE BangLuong
                             SET NgayCongThucTe = @cong, LuongTheoCong = @luongCong,
                                 TienUng = @ung, BHXH = @bhxh, Thue = @thue,
                                 TongThucNhan = @tong
@@ -125,7 +131,8 @@ namespace QuanLyNhanVien.DataAccess
                 }
                 else
                 {
-                    sql = @"INSERT INTO BangLuong (MaNV, Thang, Nam, NgayCongThucTe,
+                    sql =
+                        @"INSERT INTO BangLuong (MaNV, Thang, Nam, NgayCongThucTe,
                                 LuongTheoCong, TienUng, BHXH, Thue, TongThucNhan)
                             VALUES (@maNV, @thang, @nam, @cong, @luongCong,
                                     @ung, @bhxh, @thue, @tong)";
@@ -170,7 +177,8 @@ namespace QuanLyNhanVien.DataAccess
             using (var conn = DatabaseHelper.GetConnection())
             {
                 conn.Open();
-                string sql = @"SELECT Thang,
+                string sql =
+                    @"SELECT Thang,
                                       COUNT(MaNV) AS SoNhanVien,
                                       SUM(LuongTheoCong) AS TongLuong,
                                       SUM(TienUng) AS TongUng,

@@ -18,7 +18,8 @@ namespace QuanLyNhanVien.Infrastructure
                 // Nếu không ghi nhớ, chúng ta xóa file cũ đi
                 if (!remember)
                 {
-                    if (File.Exists(FilePath)) File.Delete(FilePath);
+                    if (File.Exists(FilePath))
+                        File.Delete(FilePath);
                     return;
                 }
 
@@ -27,14 +28,17 @@ namespace QuanLyNhanVien.Infrastructure
                 string content = $"{user}|{encryptedPass}|{remember}";
                 File.WriteAllText(FilePath, content);
             }
-            catch { /* Log error if needed */ }
+            catch
+            { /* Lên log bắt lỗi ở đây nếu cần */
+            }
         }
 
         public static LoginSettings Load()
         {
             try
             {
-                if (!File.Exists(FilePath)) return null;
+                if (!File.Exists(FilePath))
+                    return null;
 
                 string content = File.ReadAllText(FilePath);
                 string[] parts = content.Split('|');
@@ -45,7 +49,7 @@ namespace QuanLyNhanVien.Infrastructure
                     {
                         Username = parts[0],
                         EncryptedPassword = parts[1],
-                        RememberMe = bool.Parse(parts[2])
+                        RememberMe = bool.Parse(parts[2]),
                     };
                 }
             }

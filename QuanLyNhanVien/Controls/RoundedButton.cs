@@ -15,28 +15,32 @@ namespace QuanLyNhanVien.Controls
         private Color _idleColor = AppColors.Surface0;
         private Color _hoverColor = AppColors.Surface1;
         private Color _pressColor = AppColors.Surface2;
-        private Color _accentColor = Color.Empty;   // optional left-accent stripe
+        private Color _accentColor = Color.Empty; // optional left-accent stripe
         private int _cornerRadius = 10;
         private int _accentWidth = 4;
         private ContentAlignment _textAlign = ContentAlignment.MiddleLeft;
+        private Image _image = null;
+        private ContentAlignment _imageAlign = ContentAlignment.MiddleLeft;
+        private TextImageRelation _textImageRelation = TextImageRelation.ImageBeforeText;
 
         // === ANIMATION STATE ===
         private Timer _animTimer;
         private float _animProgress = 0f;
         private bool _isHovered = false;
         private bool _isPressed = false;
-        private const int ANIM_INTERVAL = 20;  // ms per frame
-        private const float ANIM_STEP = 0.15f;  // progress per frame
+        private const int ANIM_INTERVAL = 20; // ms per frame
+        private const float ANIM_STEP = 0.15f; // progress per frame
 
         public RoundedButton()
         {
             SetStyle(
-                ControlStyles.AllPaintingInWmPaint |
-                ControlStyles.UserPaint |
-                ControlStyles.OptimizedDoubleBuffer |
-                ControlStyles.ResizeRedraw |
-                ControlStyles.SupportsTransparentBackColor,
-                true);
+                ControlStyles.AllPaintingInWmPaint
+                    | ControlStyles.UserPaint
+                    | ControlStyles.OptimizedDoubleBuffer
+                    | ControlStyles.ResizeRedraw
+                    | ControlStyles.SupportsTransparentBackColor,
+                true
+            );
 
             this.Font = AppFonts.Body;
             this.ForeColor = AppColors.Text;
@@ -53,19 +57,31 @@ namespace QuanLyNhanVien.Controls
         public Color IdleColor
         {
             get => _idleColor;
-            set { _idleColor = value; Invalidate(); }
+            set
+            {
+                _idleColor = value;
+                Invalidate();
+            }
         }
 
         public Color HoverColor
         {
             get => _hoverColor;
-            set { _hoverColor = value; Invalidate(); }
+            set
+            {
+                _hoverColor = value;
+                Invalidate();
+            }
         }
 
         public Color PressColor
         {
             get => _pressColor;
-            set { _pressColor = value; Invalidate(); }
+            set
+            {
+                _pressColor = value;
+                Invalidate();
+            }
         }
 
         /// <summary>
@@ -75,19 +91,61 @@ namespace QuanLyNhanVien.Controls
         public Color AccentColor
         {
             get => _accentColor;
-            set { _accentColor = value; Invalidate(); }
+            set
+            {
+                _accentColor = value;
+                Invalidate();
+            }
         }
 
         public int CornerRadius
         {
             get => _cornerRadius;
-            set { _cornerRadius = value; Invalidate(); }
+            set
+            {
+                _cornerRadius = value;
+                Invalidate();
+            }
         }
 
         public ContentAlignment TextAlign
         {
             get => _textAlign;
-            set { _textAlign = value; Invalidate(); }
+            set
+            {
+                _textAlign = value;
+                Invalidate();
+            }
+        }
+
+        public Image Image
+        {
+            get => _image;
+            set
+            {
+                _image = value;
+                Invalidate();
+            }
+        }
+
+        public ContentAlignment ImageAlign
+        {
+            get => _imageAlign;
+            set
+            {
+                _imageAlign = value;
+                Invalidate();
+            }
+        }
+
+        public TextImageRelation TextImageRelation
+        {
+            get => _textImageRelation;
+            set
+            {
+                _textImageRelation = value;
+                Invalidate();
+            }
         }
 
         #endregion
@@ -170,14 +228,17 @@ namespace QuanLyNhanVien.Controls
                 {
                     g.FillPath(brush, path);
                 }
-
             }
 
             // Draw accent stripe (left bar on the button)
             if (_accentColor != Color.Empty)
             {
-                using (var accentPath = CreateRoundedRect(
-                    new Rectangle(0, 0, _accentWidth + _cornerRadius, Height - 1), _cornerRadius))
+                using (
+                    var accentPath = CreateRoundedRect(
+                        new Rectangle(0, 0, _accentWidth + _cornerRadius, Height - 1),
+                        _cornerRadius
+                    )
+                )
                 {
                     // Clip to the left part only
                     g.SetClip(new Rectangle(0, 0, _accentWidth, Height));
@@ -189,10 +250,28 @@ namespace QuanLyNhanVien.Controls
                 }
             }
 
-            // Draw text
+            // Draw image and text
+            int imageX = 0;
+            int imageW = 0;
+            if (_image != null)
+            {
+                imageW = _image.Width;
+                int imageY = (Height - _image.Height) / 2;
+                if (_imageAlign == ContentAlignment.MiddleCenter)
+                {
+                    imageX = (Width - _image.Width) / 2;
+                }
+                else
+                {
+                    imageX = Padding.Left + (_accentColor != Color.Empty ? _accentWidth + 4 : 0);
+                }
+                g.DrawImage(_image, imageX, imageY, _image.Width, _image.Height);
+                imageW += 6; // gap between image and text
+            }
+
             var flags = TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis;
             bool isCenter = (_textAlign == ContentAlignment.MiddleCenter);
-            
+
             if (_textAlign == ContentAlignment.MiddleLeft)
                 flags |= TextFormatFlags.Left;
             else if (isCenter)
@@ -201,18 +280,15 @@ namespace QuanLyNhanVien.Controls
                 flags |= TextFormatFlags.Right;
 
             Rectangle textRect;
-            if (isCenter)
+            if (isCenter && _image == null)
             {
-                // For perfectly centered icons (collapsed mode), ignore padding and accent shift
                 textRect = new Rectangle(0, 0, Width, Height);
             }
             else
             {
-                textRect = new Rectangle(
-                    Padding.Left + (_accentColor != Color.Empty ? _accentWidth + 4 : 0),
-                    0,
-                    Width - Padding.Horizontal - (_accentColor != Color.Empty ? _accentWidth + 4 : 0),
-                    Height);
+                int leftOffset =
+                    Padding.Left + (_accentColor != Color.Empty ? _accentWidth + 4 : 0) + imageW;
+                textRect = new Rectangle(leftOffset, 0, Width - leftOffset - Padding.Right, Height);
             }
 
             TextRenderer.DrawText(g, Text, Font, textRect, ForeColor, flags);

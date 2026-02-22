@@ -5,21 +5,21 @@ using QuanLyNhanVien.Models;
 namespace QuanLyNhanVien.Services
 {
     /// <summary>
-    /// Business logic for department (Bộ Phận) management.
-    /// Encapsulates validation, cascade-delete checks, and CRUD orchestration.
+    /// File xử lý nghiệp vụ cho quản lý phòng ban (Bộ Phận).
+    /// Bao bọc lại quy trình xác thực, kiểm tra xóa đồng loạt theo chuỗi, và tích hợp CRUD.
     /// </summary>
     public class BoPhanService
     {
         private readonly BoPhanDAL _dal = new BoPhanDAL();
 
-        /// <summary>Returns all departments, ordered by name.</summary>
+        /// <summary>Truy xuất toàn danh sách phòng ban, tự động sắp xếp tên bộ phận.</summary>
         public List<BoPhan> LayTatCa()
         {
             return _dal.LayTatCa();
         }
 
         /// <summary>
-        /// Validate and add a new department.
+        /// Xác thực và tạo mới phòng ban hợp lệ.
         /// </summary>
         public ServiceResult ThemBoPhan(string tenBoPhan)
         {
@@ -34,7 +34,7 @@ namespace QuanLyNhanVien.Services
         }
 
         /// <summary>
-        /// Validate and update an existing department.
+        /// Xác thực và cập nhật nội dung phòng ban cũ.
         /// </summary>
         public ServiceResult CapNhatBoPhan(int maBoPhan, string tenBoPhan)
         {
@@ -44,11 +44,7 @@ namespace QuanLyNhanVien.Services
             if (string.IsNullOrWhiteSpace(tenBoPhan))
                 return ServiceResult.Fail("Vui lòng nhập tên bộ phận.");
 
-            var bp = new BoPhan
-            {
-                MaBoPhan = maBoPhan,
-                TenBoPhan = tenBoPhan.Trim()
-            };
+            var bp = new BoPhan { MaBoPhan = maBoPhan, TenBoPhan = tenBoPhan.Trim() };
 
             bool ok = _dal.CapNhat(bp);
             return ok
@@ -57,18 +53,17 @@ namespace QuanLyNhanVien.Services
         }
 
         /// <summary>
-        /// Delete a department with cascade-safety check.
-        /// Departments with assigned employees cannot be deleted.
+        /// Xóa bộ phận qua quy trình kiểm tra điều kiện an toàn thông tin chuỗi (cascade-safety).
+        /// Nghiêm cấm xóa các phòng ban nếu còn gắn với nhân sự.
         /// </summary>
         public ServiceResult XoaBoPhan(int maBoPhan)
         {
             if (maBoPhan <= 0)
                 return ServiceResult.Fail("Vui lòng chọn bộ phận cần xoá.");
 
-            // Business rule: cannot delete department that has employees
+            // Cấu trúc phân luồng: không áp dụng xóa các bộ phận còn sở hữu lượng nhân sự
             if (_dal.DangDuocSuDung(maBoPhan))
-                return ServiceResult.Fail(
-                    "Không thể xoá bộ phận đang có nhân viên.");
+                return ServiceResult.Fail("Không thể xoá bộ phận đang có nhân viên.");
 
             bool ok = _dal.Xoa(maBoPhan);
             return ok

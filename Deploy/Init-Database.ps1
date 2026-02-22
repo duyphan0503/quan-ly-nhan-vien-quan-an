@@ -54,7 +54,7 @@ param(
     [string]$SqlPassword,
 
     [Parameter()]
-    [string]$ScriptDirectory = $PSScriptRoot,
+    [string]$ScriptDirectory = "",
 
     [switch]$SkipValidation
 )
@@ -64,6 +64,21 @@ param(
 # ============================================================
 $ErrorActionPreference = "Stop"
 $DatabaseName = "QuanLyNhanVien"
+
+# Tự động tìm thư mục SQL nếu không được chỉ định
+if ([string]::IsNullOrWhiteSpace($ScriptDirectory)) {
+    # Thử tìm QuanLyNhanVien/SQL cạnh thư mục Deploy
+    $parentDir = Split-Path $PSScriptRoot -Parent
+    $autoDetect = Join-Path $parentDir "QuanLyNhanVien\SQL"
+
+    if (Test-Path $autoDetect) {
+        $ScriptDirectory = $autoDetect
+    }
+    else {
+        # Fallback: dùng thư mục hiện tại của script
+        $ScriptDirectory = $PSScriptRoot
+    }
+}
 
 # Thứ tự migration scripts (PHẢI chạy theo đúng thứ tự này)
 $migrationScripts = @(

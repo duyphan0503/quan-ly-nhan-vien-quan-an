@@ -13,7 +13,7 @@ namespace QuanLyNhanVien.Models
         public decimal Thue { get; set; }
         public decimal TongThucNhan { get; set; }
 
-        // Navigation (display only)
+        // Điều hướng kết nối (chỉ dùng để hiển thị)
         public string HoTen { get; set; }
         public string TenBoPhan { get; set; }
         public decimal LuongCoBan { get; set; }

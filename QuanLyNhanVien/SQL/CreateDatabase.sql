@@ -79,12 +79,12 @@ END
 GO
 
 -- =============================================
--- DỮ LIỆU MẪU (Sample Data)
+-- DỮ LIỆU MẪU
 -- =============================================
 
--- Tài khoản mặc định: admin / admin123
+-- Tài khoản mặc định: admin / admin123 (mật khẩu lưu dạng SHA-256 hash)
 INSERT INTO TaiKhoan (TenDangNhap, MatKhau, VaiTro)
-VALUES (N'admin', N'admin123', N'Admin');
+VALUES (N'admin', N'240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', N'Admin');
 GO
 
 -- Bộ phận mẫu
@@ -123,5 +123,5 @@ VALUES
 (8, 1, 2026, 23.0, 5750000, 0,       682500, 0, 5067500);
 GO
 
-PRINT N'✅ Tạo cơ sở dữ liệu QuanLyNhanVien thành công!';
+PRINT N'Tạo cơ sở dữ liệu QuanLyNhanVien thành công!';
 GO

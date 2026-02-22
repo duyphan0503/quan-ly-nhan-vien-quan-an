@@ -1,237 +1,129 @@
 using System;
-using System.Drawing;
 using System.Windows.Forms;
 using QuanLyNhanVien.Services;
-using QuanLyNhanVien.Infrastructure;
 
 namespace QuanLyNhanVien.Forms
 {
-    public class FormBoPhan : Form
+    public partial class FormBoPhan : Form
     {
-        private DataGridView dgv;
-        private TextBox txtTenBoPhan;
-        private Button btnThem;
-        private Button btnSua;
-        private Button btnXoa;
-        private Button btnLamMoi;
-
         private readonly BoPhanService _service = new BoPhanService();
         private int _selectedId = -1;
+        private bool _sortAscending = false;
 
         public FormBoPhan()
         {
             InitializeComponent();
+            ApplyTheme();
+            WireEvents();
             LoadData();
         }
 
-        private void InitializeComponent()
+        /// <summary>
+        /// Ghi đè giao diện chủ đề trực tiếp khi chạy chương trình (màu sắc Theme, bộ chữ Fonts, biểu tượng Icons) đè lên
+        /// nền giao diện nguyên bản mặc định sinh ra bởi trình thiết kế Designer (InitializeComponent).
+        /// Cơ chế này đảm bảo sự đồng bộ trên thiết kế giao diện thống nhất và tích hợp phông chữ dự phòng tốt qua nền tảng Mono.
+        /// </summary>
+        private void ApplyTheme()
         {
-            this.Text = "Quản Lý Bộ Phận – Chức Vụ";
+            // Khung biểu mẫu nền
             this.BackColor = AppColors.Base;
-            this.Padding = new Padding(0);
 
-            // === INPUT AREA ===
-            var pnlInput = new Panel
-            {
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                BackColor = AppColors.Surface0,
-                Padding = new Padding(20, 10, 20, 10)
-            };
+            // Khung tiếp nhận dữ liệu
+            this.pnlInput.BackColor = AppColors.Surface0;
 
-            // Input Row using Table
-            var table = new TableLayoutPanel
-            {
-                Dock = DockStyle.Top,
-                ColumnCount = 2,
-                RowCount = 1,
-                AutoSize = true,
-                Padding = new Padding(0, 0, 0, 10)
-            };
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            // Dán nhãn (Label)
+            this.lblTenBoPhan.Font = AppFonts.Body;
+            this.lblTenBoPhan.ForeColor = AppColors.SubText;
 
-            var lblTen = new Label
-            {
-                Text = "Tên bộ phận:",
-                Font = AppFonts.Body,
-                ForeColor = AppColors.SubText,
-                AutoSize = true,
-                Anchor = AnchorStyles.Left,
-                Margin = new Padding(0, 0, 15, 0)
-            };
+            // Hộp nhập chữ (TextBox)
+            this.txtTenBoPhan.Font = AppFonts.Body;
+            this.txtTenBoPhan.BackColor = AppColors.InputBg;
 
-            txtTenBoPhan = new TextBox
-            {
-                Font = AppFonts.Body,
-                BackColor = AppColors.InputBg,
-                ForeColor = Color.White,
-                BorderStyle = BorderStyle.FixedSingle,
-                Dock = DockStyle.Fill
-            };
-            
-            table.Controls.Add(lblTen, 0, 0);
-            table.Controls.Add(txtTenBoPhan, 1, 0);
-            
-            // Buttons Row using Flow
-            var flowActions = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Top,
-                FlowDirection = FlowDirection.LeftToRight,
-                AutoSize = true
-            };
+            // Áp dụng định dạng nút — theo hệ màu chủ đề + biểu tượng icon
+            ApplyButtonTheme(btnThem, AppColors.Green, AppIcons.Add);
+            ApplyButtonTheme(btnSua, AppColors.Blue, AppIcons.Edit);
+            ApplyButtonTheme(btnXoa, AppColors.Red, AppIcons.Delete);
+            ApplyButtonTheme(btnLamMoi, AppColors.Yellow, AppIcons.Refresh);
 
-            btnThem = CreateButton("➕ Thêm", AppColors.Green);
-            btnThem.Click += BtnThem_Click;
+            // Bảng lưới dữ liệu DataGridView
+            this.dgv.AutoGenerateColumns = false;
+            this.dgv.BackgroundColor = AppColors.Base;
+            this.dgv.Font = AppFonts.Body;
+            this.dgv.DefaultCellStyle.BackColor = AppColors.Surface0;
+            this.dgv.DefaultCellStyle.ForeColor = AppColors.Text;
+            this.dgv.DefaultCellStyle.SelectionBackColor = AppColors.Blue;
+            this.dgv.DefaultCellStyle.SelectionForeColor = AppColors.Base;
+            this.dgv.DefaultCellStyle.Font = AppFonts.Body;
+            this.dgv.ColumnHeadersDefaultCellStyle.BackColor = AppColors.Mantle;
+            this.dgv.ColumnHeadersDefaultCellStyle.ForeColor = AppColors.Green;
+            this.dgv.ColumnHeadersDefaultCellStyle.Font = AppFonts.BodyBold;
 
-            btnSua = CreateButton("✏️ Sửa", AppColors.Blue);
-            btnSua.Click += BtnSua_Click;
-
-            btnXoa = CreateButton("🗑️ Xoá", AppColors.Red);
-            btnXoa.Click += BtnXoa_Click;
-
-            btnLamMoi = CreateButton("🔄 Làm mới", AppColors.Yellow);
-            btnLamMoi.Click += (s, e) => LamMoi();
-
-            flowActions.Controls.AddRange(new Control[] { btnThem, btnSua, btnXoa, btnLamMoi });
-
-            // Add to pnlInput (Flow first, Table second means Flow is below Table because both are Dock=Top? No.)
-            // Index 0 is Top.
-            // We want Table Top, Flow Bottom.
-            // So Add Flow (0), then input Table (0 pushes Flow down).
-            pnlInput.Controls.Add(flowActions);
-            pnlInput.Controls.Add(table);
-
-            // === MAIN LAYOUT ===
-            var mainLayout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 1,
-                RowCount = 2,
-                BackColor = Color.Transparent
-            };
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            this.Controls.Add(mainLayout);
-
-            pnlInput.Dock = DockStyle.Fill;
-            mainLayout.Controls.Add(pnlInput, 0, 0);
-
-            // === GRID AREA ===
-            var pnlGrid = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Margin = new Padding(0, 10, 0, 0), // Automatic gap below Input Area
-                Padding = new Padding(0)
-            };
-
-            dgv = new DataGridView
-            {
-                Dock = DockStyle.Fill,
-                BackgroundColor = AppColors.Base,
-                BorderStyle = BorderStyle.None,
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                ReadOnly = true,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None,
-                RowHeadersVisible = false,
-                Font = AppFonts.Body,
-                DefaultCellStyle = new DataGridViewCellStyle
-                {
-                    BackColor = AppColors.Surface0,
-                    ForeColor = AppColors.Text,
-                    SelectionBackColor = AppColors.Blue,
-                    SelectionForeColor = AppColors.Base,
-                    Font = AppFonts.Body
-                },
-                ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
-                {
-                    BackColor = AppColors.Mantle,
-                    ForeColor = AppColors.Green,
-                    Font = AppFonts.BodyBold,
-                    Alignment = DataGridViewContentAlignment.MiddleCenter
-                },
-                EnableHeadersVisualStyles = false,
-                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
-                ColumnHeadersHeight = 45,
-                RowTemplate = { Height = 35 },
-                AutoGenerateColumns = false
-            };
-
-            dgv.Columns.AddRange(new DataGridViewColumn[]
-            {
-                new DataGridViewTextBoxColumn 
-                { 
-                    Name = "MaBoPhan", 
-                    DataPropertyName = "MaBoPhan", 
-                    HeaderText = "Mã Bộ Phận", 
-                    Width = 150,
-                    DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleCenter }
-                },
-                new DataGridViewTextBoxColumn 
-                { 
-                    Name = "TenBoPhan", 
-                    DataPropertyName = "TenBoPhan", 
-                    HeaderText = "Tên Bộ Phận", 
-                    AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                    DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleLeft }
-                }
-            });
-
-            foreach (DataGridViewColumn col in dgv.Columns)
-            {
-                col.SortMode = DataGridViewColumnSortMode.Programmatic;
-            }
-
-            GridHelper.FixAlignment(dgv);
-
-            dgv.ColumnHeaderMouseClick += Dgv_Sort;
-            dgv.CellClick += Dgv_CellClick;
-
-            pnlGrid.Controls.Add(dgv);
-            mainLayout.Controls.Add(pnlGrid, 0, 1);
+            Infrastructure.GridHelper.FixAlignment(dgv);
         }
 
-        private Button CreateButton(string text, Color bg)
+        private void ApplyButtonTheme(
+            System.Windows.Forms.Button btn,
+            System.Drawing.Color bg,
+            System.Drawing.Image icon
+        )
         {
-            var btn = new Button
+            btn.BackColor = bg;
+            btn.ForeColor = AppColors.Base;
+            btn.Font = AppFonts.TinyBold;
+            if (icon != null)
             {
-                Text = text,
-                Font = AppFonts.TinyBold,
-                Size = new Size(110, 36),
-                BackColor = bg,
-                ForeColor = AppColors.Base,
-                FlatStyle = FlatStyle.Flat,
-                Cursor = Cursors.Hand,
-                Margin = new Padding(0, 0, 10, 0)
-            };
-            btn.FlatAppearance.BorderSize = 0;
-            return btn;
+                btn.Image = icon;
+                btn.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+                btn.TextImageRelation = TextImageRelation.ImageBeforeText;
+            }
+        }
+
+        private void WireEvents()
+        {
+            this.btnThem.Click += BtnThem_Click;
+            this.btnSua.Click += BtnSua_Click;
+            this.btnXoa.Click += BtnXoa_Click;
+            this.btnLamMoi.Click += (s, e) => LamMoi();
+            this.dgv.ColumnHeaderMouseClick += Dgv_Sort;
+            this.dgv.CellClick += Dgv_CellClick;
         }
 
         private void Dgv_Sort(object sender, DataGridViewCellMouseEventArgs e)
         {
             string propertyName = dgv.Columns[e.ColumnIndex].DataPropertyName;
-            if (string.IsNullOrEmpty(propertyName)) return;
+            if (string.IsNullOrEmpty(propertyName))
+                return;
 
-            var list = (System.Collections.Generic.List<QuanLyNhanVien.Models.BoPhan>)dgv.DataSource;
-            if (list == null) return;
+            var list = (System.Collections.Generic.List<QuanLyNhanVien.Models.BoPhan>)
+                dgv.DataSource;
+            if (list == null)
+                return;
 
             _sortAscending = !_sortAscending;
             var prop = typeof(QuanLyNhanVien.Models.BoPhan).GetProperty(propertyName);
-            if (prop == null) return;
+            if (prop == null)
+                return;
 
             if (_sortAscending)
-                list.Sort((a, b) => System.Collections.Comparer.Default.Compare(prop.GetValue(a), prop.GetValue(b)));
+                list.Sort(
+                    (a, b) =>
+                        System.Collections.Comparer.Default.Compare(
+                            prop.GetValue(a),
+                            prop.GetValue(b)
+                        )
+                );
             else
-                list.Sort((a, b) => System.Collections.Comparer.Default.Compare(prop.GetValue(b), prop.GetValue(a)));
+                list.Sort(
+                    (a, b) =>
+                        System.Collections.Comparer.Default.Compare(
+                            prop.GetValue(b),
+                            prop.GetValue(a)
+                        )
+                );
 
             dgv.DataSource = null;
             dgv.DataSource = list;
         }
-
-        private bool _sortAscending = false;
 
         private void LoadData()
         {
@@ -242,10 +134,11 @@ namespace QuanLyNhanVien.Forms
 
         private void Dgv_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0) return;
+            if (e.RowIndex < 0)
+                return;
             var row = dgv.Rows[e.RowIndex];
-            _selectedId = (int)row.Cells["MaBoPhan"].Value;
-            txtTenBoPhan.Text = row.Cells["TenBoPhan"].Value?.ToString();
+            _selectedId = (int)row.Cells["colMaBoPhan"].Value;
+            txtTenBoPhan.Text = row.Cells["colTenBoPhan"].Value?.ToString();
         }
 
         private void BtnThem_Click(object sender, EventArgs e)
@@ -255,17 +148,32 @@ namespace QuanLyNhanVien.Forms
                 var result = _service.ThemBoPhan(txtTenBoPhan.Text);
                 if (result.Success)
                 {
-                    MessageBox.Show("✅ " + result.Message, "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(
+                        result.Message,
+                        "Thành công",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
                     LamMoi();
                 }
                 else
                 {
-                    MessageBox.Show(result.Message, "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(
+                        result.Message,
+                        "Thông báo",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning
+                    );
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    "Lỗi: " + ex.Message,
+                    "Lỗi",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
             }
         }
 
@@ -276,17 +184,32 @@ namespace QuanLyNhanVien.Forms
                 var result = _service.CapNhatBoPhan(_selectedId, txtTenBoPhan.Text);
                 if (result.Success)
                 {
-                    MessageBox.Show("✅ " + result.Message, "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(
+                        result.Message,
+                        "Thành công",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
                     LamMoi();
                 }
                 else
                 {
-                    MessageBox.Show(result.Message, "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(
+                        result.Message,
+                        "Thông báo",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning
+                    );
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    "Lỗi: " + ex.Message,
+                    "Lỗi",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
             }
         }
 
@@ -294,29 +217,55 @@ namespace QuanLyNhanVien.Forms
         {
             if (_selectedId < 0)
             {
-                MessageBox.Show("Vui lòng chọn bộ phận cần xoá!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(
+                    "Vui lòng chọn bộ phận cần xoá!",
+                    "Thông báo",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
                 return;
             }
 
-            var confirm = MessageBox.Show("Bạn có chắc muốn xoá bộ phận này?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (confirm != DialogResult.Yes) return;
+            var confirm = MessageBox.Show(
+                "Bạn có chắc muốn xoá bộ phận này?",
+                "Xác nhận",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
+            if (confirm != DialogResult.Yes)
+                return;
 
             try
             {
                 var result = _service.XoaBoPhan(_selectedId);
                 if (result.Success)
                 {
-                    MessageBox.Show("✅ " + result.Message, "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(
+                        result.Message,
+                        "Thành công",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
                     LamMoi();
                 }
                 else
                 {
-                    MessageBox.Show(result.Message, "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(
+                        result.Message,
+                        "Cảnh báo",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning
+                    );
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    "Lỗi: " + ex.Message,
+                    "Lỗi",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
             }
         }
 

@@ -5,12 +5,12 @@ using System.Data.SqlClient;
 namespace QuanLyNhanVien.DataAccess
 {
     /// <summary>
-    /// Thread-safe database connection factory.
-    /// Uses Lazy&lt;T&gt; for safe one-time initialization of the connection string.
-    /// 
-    /// Supports runtime connection string updates from the Connection Wizard:
-    /// after the wizard saves to App.config and calls RefreshConnectionString(),
-    /// subsequent calls to GetConnection() use the new value.
+    /// Factory tạo kết nối trực tiếp với CSDL thiết kế chuẩn Thread-safe.
+    /// Ứng dụng Lazy&lt;T&gt; giúp khởi tạo an toàn chuỗi kết nối duy nhất 1 lần (one-time initialization)
+    ///
+    /// Nâng cấp khả năng cập nhật chuỗi cấu hình tại thời gian thực thông qua Wizard Kết nối trực quan:
+    /// khi Wizard lưu trực tiếp thông số vào file App.config rồi khởi động tiến trình RefreshConnectionString(),
+    /// Các tác vụ GetConnection() nối tiếp ngay sau đó sẽ tự động sử dụng tham chiếu thiết lập mới.
     /// </summary>
     public static class DatabaseHelper
     {
@@ -19,8 +19,8 @@ namespace QuanLyNhanVien.DataAccess
         private static bool _initialized;
 
         /// <summary>
-        /// The connection string, lazily initialized from App.config.
-        /// Thread-safe.
+        /// Biến trỏ thông tin chuỗi kết nối, khởi tạo trễ có sẵn qua tham số được đặt ở App.config.
+        /// Được tối ưu an toàn khi chia sẻ trên luồng - Thread-safe.
         /// </summary>
         public static string ConnectionString
         {
@@ -35,7 +35,8 @@ namespace QuanLyNhanVien.DataAccess
                             var cs = ConfigurationManager.ConnectionStrings["QuanLyNhanVien"];
                             if (cs == null)
                                 throw new InvalidOperationException(
-                                    "Connection string 'QuanLyNhanVien' not found in App.config.");
+                                    "Connection string 'QuanLyNhanVien' not found in App.config."
+                                );
                             _connectionString = cs.ConnectionString;
                             _initialized = true;
                         }
@@ -46,8 +47,8 @@ namespace QuanLyNhanVien.DataAccess
         }
 
         /// <summary>
-        /// Creates a new SqlConnection. Caller is responsible for opening and disposing.
-        /// Each call returns a fresh connection — no shared mutable state.
+        /// Khởi tạo phiên giao dịch chuẩn SqlConnection mới. Tiến trình gọi cần tự chịu trách nhiệm Open() và Dispose().
+        /// Hàm này không có bất kỳ trạng thái chung - shared mutable state.
         /// </summary>
         public static SqlConnection GetConnection()
         {
@@ -55,8 +56,8 @@ namespace QuanLyNhanVien.DataAccess
         }
 
         /// <summary>
-        /// Forces re-reading the connection string from App.config.
-        /// Call this after the Connection Wizard updates the config.
+        /// Ép buộc hệ thống đọc lại chuỗi thông số kết nối từ file App.config (Restarting State).
+        /// Hàm này lập tức được thực thi ngay sau khi Connection Wizard lưu sự thay đổi.
         /// </summary>
         public static void RefreshConnectionString()
         {
@@ -69,9 +70,9 @@ namespace QuanLyNhanVien.DataAccess
         }
 
         /// <summary>
-        /// Quick connectivity test. Returns true if a connection can be opened
-        /// and a simple query executed. Used by Program.Main to decide whether
-        /// to launch the Connection Wizard.
+        /// Test đường truyền siêu tốc. Hàm phản hồi True nếu có thể cấu trúc liên kết và gọi truy vấn tối giản nhất.
+        /// Hàm này được dùng trong lớp cục bộ Program.Main để quyết định xem liệu hệ thống
+        /// có nên triệu gọi Wizard sửa lỗi kết nối hay không.
         /// </summary>
         public static bool TestConnection(int timeoutSeconds = 3)
         {

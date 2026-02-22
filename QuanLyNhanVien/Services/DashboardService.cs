@@ -4,7 +4,7 @@ using QuanLyNhanVien.DataAccess;
 namespace QuanLyNhanVien.Services
 {
     /// <summary>
-    /// Aggregates statistics for the main dashboard.
+    /// Tổng hợp dữ liệu thống kê cho trang chủ tổng quan (dashboard).
     /// </summary>
     public class DashboardService
     {
@@ -13,7 +13,7 @@ namespace QuanLyNhanVien.Services
         private readonly BangLuongDAL _blDAL = new BangLuongDAL();
 
         /// <summary>
-        /// Display-ready dashboard data.
+        /// Dữ liệu tổng hợp có thể hiển thị.
         /// </summary>
         public class DashboardData
         {
@@ -23,8 +23,8 @@ namespace QuanLyNhanVien.Services
         }
 
         /// <summary>
-        /// Load dashboard statistics. Returns defaults on failure
-        /// to prevent the dashboard from being blank.
+        /// Tải thống kê trang chủ. Trả về cấu trúc mặc định nếu gặp lỗi
+        /// nhằm giúp giao diện tổng quan không bị lỗi trắng màn hình.
         /// </summary>
         public DashboardData LayThongKe()
         {
@@ -34,13 +34,17 @@ namespace QuanLyNhanVien.Services
             {
                 data.TongNhanVien = _nvDAL.LayTatCa().Count;
             }
-            catch { /* card will show 0 */ }
+            catch
+            { /* thẻ hiển thị sẽ hiển thị số 0 */
+            }
 
             try
             {
                 data.TongBoPhan = _bpDAL.LayTatCa().Count;
             }
-            catch { /* card will show 0 */ }
+            catch
+            { /* thẻ hiển thị sẽ hiển thị số 0 */
+            }
 
             try
             {
@@ -48,7 +52,9 @@ namespace QuanLyNhanVien.Services
                 int nam = DateTime.Now.Year;
                 data.BangLuongThangNay = _blDAL.LayTheoThangNam(thang, nam).Count;
             }
-            catch { /* card will show 0 */ }
+            catch
+            { /* thẻ hiển thị sẽ hiển thị số 0 */
+            }
 
             return data;
         }

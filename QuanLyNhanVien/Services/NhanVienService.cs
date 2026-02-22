@@ -5,20 +5,20 @@ using QuanLyNhanVien.Models;
 namespace QuanLyNhanVien.Services
 {
     /// <summary>
-    /// Business logic for employee (Nhân Viên) management.
-    /// Encapsulates validation, cascade-delete checks, and CRUD orchestration.
+    /// File xử lý nghiệp vụ cho đối tượng Nhân Viên.
+    /// Bao bọc lại quy trình xác thực, kiểm tra xóa đồng loạt theo chuỗi, và tích hợp CRUD.
     /// </summary>
     public class NhanVienService
     {
         private readonly NhanVienDAL _dal = new NhanVienDAL();
 
-        /// <summary>Returns all employees.</summary>
+        /// <summary>Lấy thông tin tất cả nhân viên.</summary>
         public List<NhanVien> LayTatCa()
         {
             return _dal.LayTatCa();
         }
 
-        /// <summary>Search employees by keyword.</summary>
+        /// <summary>Tìm kiếm nhân viên qua từ khóa tham chiếu.</summary>
         public List<NhanVien> TimKiem(string tuKhoa)
         {
             if (string.IsNullOrWhiteSpace(tuKhoa))
@@ -28,7 +28,7 @@ namespace QuanLyNhanVien.Services
         }
 
         /// <summary>
-        /// Validate and add a new employee.
+        /// Xác thực dữ liệu và tạo mới nhân viên.
         /// </summary>
         public ServiceResult ThemNhanVien(NhanVien nv)
         {
@@ -43,7 +43,7 @@ namespace QuanLyNhanVien.Services
         }
 
         /// <summary>
-        /// Validate and update an existing employee.
+        /// Xác thực dữ liệu và cập nhật thông tin nhân viên đã lưu.
         /// </summary>
         public ServiceResult CapNhatNhanVien(NhanVien nv)
         {
@@ -61,20 +61,21 @@ namespace QuanLyNhanVien.Services
         }
 
         /// <summary>
-        /// Delete an employee with cascade-safety check.
-        /// Employees with existing payroll records cannot be deleted — 
-        /// their status should be changed to "Nghỉ việc" instead.
+        /// Xóa nhân viên theo thủ tục kiểm tra an toàn chuỗi.
+        /// Cấm xóa nhân viên đã được gán bảng lương chi tiết —
+        /// Thay vào đó hãy thay đổi trạng thái của nhân viên thành "Nghỉ việc".
         /// </summary>
         public ServiceResult XoaNhanVien(int maNV)
         {
             if (maNV <= 0)
                 return ServiceResult.Fail("Vui lòng chọn nhân viên cần xoá.");
 
-            // Business rule: cannot delete employee who has payroll records
+            // Quy tắc logic: bỏ qua thao tác xóa với nhân viên đã thuộc danh sách một hoặc nhiều bảng lương
             if (_dal.CoLuong(maNV))
                 return ServiceResult.Fail(
-                    "Không thể xoá nhân viên đã có bảng lương.\n" +
-                    "Hãy chuyển trạng thái sang 'Nghỉ việc'.");
+                    "Không thể xoá nhân viên đã có bảng lương.\n"
+                        + "Hãy chuyển trạng thái sang 'Nghỉ việc'."
+                );
 
             bool ok = _dal.Xoa(maNV);
             return ok
@@ -83,7 +84,7 @@ namespace QuanLyNhanVien.Services
         }
 
         /// <summary>
-        /// Centralized validation for employee data.
+        /// Nguồn xác minh thông tin tập trung cho dữ liệu thẻ nhân viên.
         /// </summary>
         private ServiceResult ValidateNhanVien(NhanVien nv)
         {

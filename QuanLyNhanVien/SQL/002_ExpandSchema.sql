@@ -496,7 +496,7 @@ BEGIN
                     source.TienThuong, source.TienPhat,
                     source.HeSoTrungBinh, SYSDATETIME());
 
-        PRINT N'✅ Đã tính lương tháng ' + CAST(@Thang AS NVARCHAR)
+        PRINT N'Đã tính lương tháng ' + CAST(@Thang AS NVARCHAR)
             + N'/' + CAST(@Nam AS NVARCHAR)
             + N' cho ' + CAST(@@ROWCOUNT AS NVARCHAR) + N' nhân viên.';
 
@@ -782,7 +782,7 @@ GO
 
 PRINT N'';
 PRINT N'═══════════════════════════════════════════════';
-PRINT N'✅ Migration 002 hoàn tất!';
+PRINT N'Migration 002 hoàn tất!';
 PRINT N'   • 4 bảng mới: CaLamViec, LichLamViec,';
 PRINT N'     ChamCong, ThuongPhat';
 PRINT N'   • 6 cột mới trong BangLuong';

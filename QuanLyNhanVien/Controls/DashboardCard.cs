@@ -11,7 +11,7 @@ namespace QuanLyNhanVien.Controls
     /// </summary>
     public class DashboardCard : Control
     {
-        private string _icon = "👥";
+        private Image _icon = null;
         private string _value = "0";
         private string _subtitle = "Label";
         private Color _accentColor = AppColors.Green;
@@ -20,12 +20,13 @@ namespace QuanLyNhanVien.Controls
         public DashboardCard()
         {
             SetStyle(
-                ControlStyles.AllPaintingInWmPaint |
-                ControlStyles.UserPaint |
-                ControlStyles.OptimizedDoubleBuffer |
-                ControlStyles.ResizeRedraw |
-                ControlStyles.SupportsTransparentBackColor,
-                true);
+                ControlStyles.AllPaintingInWmPaint
+                    | ControlStyles.UserPaint
+                    | ControlStyles.OptimizedDoubleBuffer
+                    | ControlStyles.ResizeRedraw
+                    | ControlStyles.SupportsTransparentBackColor,
+                true
+            );
 
             this.Size = new Size(200, 110);
             this.Cursor = Cursors.Default;
@@ -33,28 +34,44 @@ namespace QuanLyNhanVien.Controls
 
         #region Properties
 
-        public string Icon
+        public Image Icon
         {
             get => _icon;
-            set { _icon = value; Invalidate(); }
+            set
+            {
+                _icon = value;
+                Invalidate();
+            }
         }
 
         public string Value
         {
             get => _value;
-            set { _value = value; Invalidate(); }
+            set
+            {
+                _value = value;
+                Invalidate();
+            }
         }
 
         public string Subtitle
         {
             get => _subtitle;
-            set { _subtitle = value; Invalidate(); }
+            set
+            {
+                _subtitle = value;
+                Invalidate();
+            }
         }
 
         public Color AccentColor
         {
             get => _accentColor;
-            set { _accentColor = value; Invalidate(); }
+            set
+            {
+                _accentColor = value;
+                Invalidate();
+            }
         }
 
         #endregion
@@ -63,6 +80,7 @@ namespace QuanLyNhanVien.Controls
         {
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
@@ -70,9 +88,14 @@ namespace QuanLyNhanVien.Controls
             // Card body (rounded rect)
             using (var path = CreateRoundedRect(rect, _cornerRadius))
             {
-                using (var bgBrush = new LinearGradientBrush(
-                    rect, AppColors.Surface0, AppColors.Lerp(AppColors.Surface0, AppColors.Mantle, 0.5f),
-                    LinearGradientMode.Vertical))
+                using (
+                    var bgBrush = new LinearGradientBrush(
+                        rect,
+                        AppColors.Surface0,
+                        AppColors.Lerp(AppColors.Surface0, AppColors.Mantle, 0.5f),
+                        LinearGradientMode.Vertical
+                    )
+                )
                 {
                     g.FillPath(bgBrush, path);
                 }
@@ -86,7 +109,12 @@ namespace QuanLyNhanVien.Controls
 
             // Accent stripe on the left
             g.SetClip(new Rectangle(0, 0, 5, Height));
-            using (var accentPath = CreateRoundedRect(new Rectangle(0, 0, _cornerRadius * 2 + 5, Height - 1), _cornerRadius))
+            using (
+                var accentPath = CreateRoundedRect(
+                    new Rectangle(0, 0, _cornerRadius * 2 + 5, Height - 1),
+                    _cornerRadius
+                )
+            )
             using (var ab = new SolidBrush(_accentColor))
             {
                 g.FillPath(ab, accentPath);
@@ -94,14 +122,17 @@ namespace QuanLyNhanVien.Controls
             g.ResetClip();
 
             // Icon
-            var iconFont = AppFonts.Create(24);
-            var iconSize = g.MeasureString(_icon, iconFont);
-            g.DrawString(_icon, iconFont, Brushes.White,
-                20, (Height - iconSize.Height) / 2 - 5);
-            iconFont.Dispose();
+            int iconX = 25;
+            int iconWidth = 0;
+            if (_icon != null)
+            {
+                int iconY = (Height - _icon.Height) / 2;
+                g.DrawImage(_icon, iconX, iconY);
+                iconWidth = _icon.Width;
+            }
 
             // Value text
-            int textX = 20 + (int)iconSize.Width + 8;
+            int textX = iconX + iconWidth + 15;
             var valueFont = AppFonts.Create(20, FontStyle.Bold);
             using (var vBrush = new SolidBrush(AppColors.Text))
             {
@@ -120,7 +151,11 @@ namespace QuanLyNhanVien.Controls
         {
             int d = radius * 2;
             var path = new GraphicsPath();
-            if (d <= 0) { path.AddRectangle(rect); return path; }
+            if (d <= 0)
+            {
+                path.AddRectangle(rect);
+                return path;
+            }
 
             path.AddArc(rect.X, rect.Y, d, d, 180, 90);
             path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);

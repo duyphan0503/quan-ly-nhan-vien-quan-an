@@ -9,7 +9,7 @@ namespace QuanLyNhanVien.Models
         public decimal LuongCoBan { get; set; }
         public string TrangThai { get; set; }
 
-        // Navigation (display only)
+        // Điều hướng kết nối (chỉ dùng để hiển thị)
         public string TenBoPhan { get; set; }
     }
 }

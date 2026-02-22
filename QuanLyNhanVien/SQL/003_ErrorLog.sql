@@ -1,9 +1,9 @@
 -- =============================================
 -- QUẢN LÝ NHÂN VIÊN QUÁN ĂN
--- Migration 003: Error Logging Table
+-- Migration 003: Bảng ghi log lỗi
 --
 -- Target: SQL Server 2019+
--- Date:   2026-02-14
+-- Ngày tạo: 2026-02-14
 -- =============================================
 
 USE QuanLyNhanVien;
@@ -13,7 +13,7 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 -- =============================================
--- ErrorLog — Centralized application error log
+-- ErrorLog — Bảng ghi nhận lỗi ứng dụng tập trung
 -- =============================================
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name = 'ErrorLog' AND xtype = 'U')
 BEGIN
@@ -23,17 +23,17 @@ BEGIN
         MucDo       NVARCHAR(20)  NOT NULL DEFAULT N'Error',
             -- 'Info' | 'Warning' | 'Error' | 'Critical'
         NguonLoi    NVARCHAR(200) NOT NULL,
-            -- Class/method that raised the error
+            -- Lớp/phương thức gây ra lỗi
         ThongBao    NVARCHAR(MAX) NOT NULL,
-            -- Error message
+            -- Nội dung thông báo lỗi
         ChiTiet     NVARCHAR(MAX) NULL,
-            -- Stack trace or additional details
+            -- Chi tiết stack trace hoặc thông tin bổ sung
         NguoiDung   NVARCHAR(50)  NULL,
-            -- Currently logged-in user (if known)
+            -- Người dùng đang đăng nhập (nếu có)
         TenMay      NVARCHAR(100) NULL,
-            -- Machine name
+            -- Tên máy tính thực thi
         PhienBan    NVARCHAR(20)  NULL,
-            -- Application version
+            -- Phiên bản ứng dụng
 
         CONSTRAINT CK_ErrorLog_MucDo
             CHECK (MucDo IN (N'Info', N'Warning', N'Error', N'Critical'))
@@ -41,7 +41,7 @@ BEGIN
 END
 GO
 
--- Index for time-based queries and cleanup
+-- Index hỗ trợ truy vấn theo thời gian và dọn dẹp log
 IF NOT EXISTS (
     SELECT 1 FROM sys.indexes
     WHERE name = 'IX_ErrorLog_ThoiGian'
@@ -52,7 +52,7 @@ IF NOT EXISTS (
         INCLUDE (MucDo, NguonLoi);
 GO
 
--- Index for severity-based filtering
+-- Index hỗ trợ lọc log theo mức độ lỗi
 IF NOT EXISTS (
     SELECT 1 FROM sys.indexes
     WHERE name = 'IX_ErrorLog_MucDo'
@@ -63,7 +63,7 @@ IF NOT EXISTS (
 GO
 
 -- =============================================
--- SP: sp_DocNhatKy — Read recent log entries
+-- SP: sp_DocNhatKy — Đọc các bản ghi log gần đây
 -- =============================================
 IF OBJECT_ID('dbo.sp_DocNhatKy', 'P') IS NOT NULL
     DROP PROCEDURE dbo.sp_DocNhatKy;
@@ -90,8 +90,8 @@ END
 GO
 
 -- =============================================
--- SP: sp_DonDepNhatKy — Cleanup old log entries
--- Keeps last N days, deletes the rest.
+-- SP: sp_DonDepNhatKy — Dọn dẹp log cũ
+-- Giữ lại N ngày gần nhất, xóa dữ liệu cũ hơn.
 -- =============================================
 IF OBJECT_ID('dbo.sp_DonDepNhatKy', 'P') IS NOT NULL
     DROP PROCEDURE dbo.sp_DonDepNhatKy;
@@ -107,11 +107,11 @@ BEGIN
 
     DELETE FROM ErrorLog WHERE ThoiGian < @NgayCat;
 
-    PRINT N'✅ Đã dọn dẹp nhật ký cũ hơn '
+    PRINT N'Đã dọn dẹp nhật ký cũ hơn '
         + CAST(@SoNgayGiu AS NVARCHAR) + N' ngày. '
         + CAST(@@ROWCOUNT AS NVARCHAR) + N' bản ghi đã xóa.';
 END
 GO
 
-PRINT N'✅ Migration 003: ErrorLog table created.';
+PRINT N'Migration 003: ErrorLog table created.';
 GO

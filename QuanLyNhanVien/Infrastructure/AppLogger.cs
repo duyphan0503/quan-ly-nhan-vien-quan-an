@@ -14,23 +14,23 @@ namespace QuanLyNhanVien.Infrastructure
         Info,
         Warning,
         Error,
-        Critical
+        Critical,
     }
 
     /// <summary>
-    /// Centralized application logger.
-    /// Dual-output: writes to both a local log file AND the ErrorLog database table.
-    /// 
-    /// Design:
-    /// - File logging ALWAYS works (even when DB is unreachable — this is the fallback)
-    /// - DB logging is best-effort (failures are silently caught and logged to file instead)
-    /// - Thread-safe: uses lock for file writes
-    /// - Auto-rotates log files by date (one file per day)
-    /// - Captures machine name, app version, and current user automatically
+    /// Bộ máy ghi nhật ký (logger) tập trung của toàn ứng dụng.
+    /// Kiến trúc xuất kép (Dual-output): ghi cả vào tệp log vật lý Cục bộ VÀ lưu vào bảng ErrorLog trên CSDL.
+    ///
+    /// Thiết kế:
+    /// - Quá trình ghi tệp (File logging) LUÔN hoạt động (kể cả khi CSDL bị sập mạng — đây là phương án dự phòng an toàn)
+    /// - Quá trình ghi CSDL hoạt động theo kiểu "cố gắng hết sức" (best-effort) (những lỗi nảy sinh sẽ bị tóm gọn và ghi đè sang tệp cục bộ)
+    /// - Thread-safe: xử lý Lock luồng đa nhiệm an toàn để khóa ghi tệp
+    /// - Tự động quay vòng (Auto-rotates) tệp log qua từng ngày (một file một ngày để chống tắc nghẽn)
+    /// - Tự động bắt lại các thông tin: Tên máy, phần bản ứng dụng, người dùng hiện tại
     /// </summary>
     public static class AppLogger
     {
-        // ── Configuration ──
+        // ── Cấu Hình ──
         private static readonly object _fileLock = new object();
         private static string _logDirectory;
         private static string _currentUser;
@@ -43,14 +43,14 @@ namespace QuanLyNhanVien.Infrastructure
             _machineName = Environment.MachineName;
             _currentUser = null;
 
-            // Default log directory: [exe_path]/Logs/
+            // Thư mục mặc định: [exe_path]/Logs/
             string exeDir = AppDomain.CurrentDomain.BaseDirectory;
             _logDirectory = Path.Combine(exeDir, "Logs");
         }
 
         /// <summary>
-        /// Sets the currently authenticated user name for inclusion in log entries.
-        /// Call this after login succeeds.
+        /// Gán định danh tên người dùng đã vượt qua rào bảo mật vào trong cấu trúc nội dung bản ghi log.
+        /// Hãy gọi tới tham số này ngay sau khi có thông báo "Đăng nhập xuất sắc".
         /// </summary>
         public static void SetCurrentUser(string username)
         {
@@ -58,14 +58,14 @@ namespace QuanLyNhanVien.Infrastructure
         }
 
         /// <summary>
-        /// Optionally override the log directory (e.g. from a config setting).
+        /// Đè phương thức tùy chỉnh thư mục (dành cho lấy địa chỉ từ một cài đặt cấu hình file nào đó).
         /// </summary>
         public static void SetLogDirectory(string path)
         {
             _logDirectory = path;
         }
 
-        // ── Public API ──
+        // ── API công khai ──
 
         public static void Info(string source, string message)
         {
@@ -88,32 +88,37 @@ namespace QuanLyNhanVien.Infrastructure
         }
 
         /// <summary>
-        /// Core logging method. Writes to file first (always), then DB (best-effort).
+        /// Hàm gốc quản lý việc Ghi Nhật Ký. Quá trình tệp cục bộ diễn ra đầu tiên (luôn luôn như vậy), rồi mới nối qua CSDL (best-effort).
         /// </summary>
         public static void Log(LogLevel level, string source, string message, Exception ex)
         {
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             string stackTrace = ex != null ? FlattenException(ex) : null;
 
-            // ── Step 1: Always write to file (never fails silently) ──
+            // ── Bước 1: Luôn ghi vào tệp vật lý (Không bao giờ được bỏ qua) ──
             WriteToFile(timestamp, level, source, message, stackTrace);
 
-            // ── Step 2: Best-effort write to database ──
+            // ── Bước 2: Nỗ lực hết mức đổ dữ liệu vào CSDL ──
             try
             {
                 WriteToDatabase(level, source, message, stackTrace);
             }
             catch
             {
-                // DB logging failed — that's OK, we already have the file log.
-                // Don't re-throw: we never want logging itself to crash the app.
+                // Việc ghi CSDL thất bại — Hoàn toàn bình thường, chúng ta đã có log vật lý phòng hờ.
+                // Không throw lỗi Exception ra: Hệ thống sẽ tự sập nếu để điều đó xảy ra.
             }
         }
 
-        // ── File Output ──
+        // ── Tệp Cục Bộ (Tuyến Xả) ──
 
-        private static void WriteToFile(string timestamp, LogLevel level,
-            string source, string message, string detail)
+        private static void WriteToFile(
+            string timestamp,
+            LogLevel level,
+            string source,
+            string message,
+            string detail
+        )
         {
             try
             {
@@ -145,27 +150,35 @@ namespace QuanLyNhanVien.Infrastructure
             }
             catch
             {
-                // File logging is absolute last resort — if even this fails,
-                // there's nothing we can do. Don't throw from the logger.
+                // Phương án cuối cùng là không thể cứu với ngoại lệ hệ thống tệp — nếu cái này cũng gãy thì
+                // thôi mặc kệ. Đừng báo lỗi (Throw) từ Logger.
             }
         }
 
-        // ── Database Output ──
+        // ── Cơ Sở Dữ Liệu ──
 
-        private static void WriteToDatabase(LogLevel level, string source,
-            string message, string detail)
+        private static void WriteToDatabase(
+            LogLevel level,
+            string source,
+            string message,
+            string detail
+        )
         {
-            // Use DatabaseHelper's connection string. If it fails (no DB configured yet),
-            // this entire method is wrapped in try-catch at the caller.
+            // Phụ thuộc vào con đường DatabaseHelper thiết kế. Nếu mất nối (tức là chưa có cấu hình DB nào cả),
+            // phương pháp này sẽ gói bên ngoài khối Lệnh Try-Catch tại vị trí gọi tới hàm.
             string connStr = DataAccess.DatabaseHelper.ConnectionString;
 
             using (var conn = new SqlConnection(connStr))
             {
                 conn.Open();
-                using (var cmd = new SqlCommand(@"
+                using (
+                    var cmd = new SqlCommand(
+                        @"
                     INSERT INTO ErrorLog (MucDo, NguonLoi, ThongBao, ChiTiet, NguoiDung, TenMay, PhienBan)
                     VALUES (@MucDo, @NguonLoi, @ThongBao, @ChiTiet, @NguoiDung, @TenMay, @PhienBan)",
-                    conn))
+                        conn
+                    )
+                )
                 {
                     cmd.Parameters.AddWithValue("@MucDo", level.ToString());
                     cmd.Parameters.AddWithValue("@NguonLoi", Truncate(source, 200));
@@ -179,10 +192,10 @@ namespace QuanLyNhanVien.Infrastructure
             }
         }
 
-        // ── Helpers ──
+        // ── Cấu Trúc Hỗ Trợ (Helpers) ──
 
         /// <summary>
-        /// Recursively flattens an exception chain (including InnerException) into a string.
+        /// Cấu trúc giải nén mảng chuỗi phân cấp (bao gồm cả lớp bảo vệ InnerException) để đổ ra mảng chuỗi ký tự String thuần.
         /// </summary>
         private static string FlattenException(Exception ex)
         {
@@ -205,7 +218,8 @@ namespace QuanLyNhanVien.Infrastructure
 
         private static string Truncate(string value, int maxLength)
         {
-            if (string.IsNullOrEmpty(value)) return value;
+            if (string.IsNullOrEmpty(value))
+                return value;
             return value.Length <= maxLength ? value : value.Substring(0, maxLength);
         }
     }
