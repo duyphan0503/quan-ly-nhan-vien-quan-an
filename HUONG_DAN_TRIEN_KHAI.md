@@ -872,4 +872,4 @@ Start-Service -Name "SQLBrowser"
 >
 > Phiên bản ứng dụng: **1.0.0**
 >
-> Liên hệ hỗ trợ: _(điền thông tin liên hệ của đội phát triển)_
+> Liên hệ hỗ trợ:
