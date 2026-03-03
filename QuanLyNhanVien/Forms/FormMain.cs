@@ -61,6 +61,10 @@ namespace QuanLyNhanVien.Forms
             lblMenu.ForeColor = AppColors.Overlay;
             btnToggle.Font = AppFonts.Create(20, FontStyle.Bold);
             btnToggle.ForeColor = AppColors.Text;
+            btnToggle.Text = "";
+            btnToggle.Image = AppIcons.Get(IconChar.Bars, AppColors.Text, 24);
+            btnToggle.ImageAlign = ContentAlignment.MiddleCenter;
+            btnToggle.Padding = new Padding(0);
 
             // Phần đầu trang (Header)
             lblPageTitle.Font = AppFonts.Create(14, FontStyle.Bold);
